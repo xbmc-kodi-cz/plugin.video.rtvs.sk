@@ -313,15 +313,14 @@ class RtvsContentProvider(ContentProvider):
         else:
             video_id = item['url'].split('/')[-1]
             self.info("<resolve> videoid: %s" % video_id)
-            videodata = util.json.loads(util.request("http://www.rtvs.sk/json/archive.json?id=" + video_id))
-            for v in videodata['playlist']:
-                url = "%s/%s" % (v['baseUrl'], v['url'].replace('.f4m', '.m3u8'))
-                #http://cdn.srv.rtvs.sk:1935/vod/_definst_//smil:fZGAj3tv0QN4WtoHawjZnKy35t7dUaoB.smil/manifest.m3u8
-                if '/smil:' in url:
+            videodata = util.json.loads(util.request("https://www.rtvs.sk/json/archive5f.json?id=" + video_id))
+            for v in videodata['clip']['sources']:
+                url =  v['src']
+                if '.m3u8' in url:
                     if is_kodi_leia():
                         #return playlist with adaptive flag
                         item = self.video_item()
-                        item['title'] = v['details']['name']
+                        item['title'] = videodata.get('title','')
                         item['surl'] = item['title']
                         item['quality'] = 'adaptive'
                         item['url'] = url
@@ -330,18 +329,11 @@ class RtvsContentProvider(ContentProvider):
                         #process m3u8 playlist
                         for stream in get_streams_from_manifest_url(url):
                             item = self.video_item()
-                            item['title'] = v['details']['name']
+                            item['title'] = videodata.get('title','')
                             item['surl'] = item['title']
                             item['url'] = stream['url']
                             item['quality'] = stream['quality']
                             result.append(item)
-                else:
-                    item = self.video_item()
-                    item['title'] = v['details']['name']
-                    item['surl'] = item['title']
-                    item['quality'] = '???'
-                    item['url'] = url
-                    result.append(item)
         self.info("<resolve> playlist: %d items" % len(result))
         map(self.info, ["<resolve> item(%d): title= '%s', url= '%s'" % (i, it['title'], it['url']) for i, it in enumerate(result)])
         if len(result) > 0 and select_cb:
