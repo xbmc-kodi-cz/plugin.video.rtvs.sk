@@ -20,7 +20,6 @@
 # *
 # */
 import os
-import urllib2
 
 sys.path.append(os.path.join (os.path.dirname(__file__), 'resources', 'lib'))
 import rtvs
@@ -39,13 +38,14 @@ class RtvsXBMCContentProvider(xbmcprovider.XBMCMultiResolverContentProvider):
 
     def play(self, item):
         stream = self.resolve(item['url'])
-        print type(stream)
+        print(type(stream))
         if type(stream) == type([]):
             # resolved to mutliple files, we'll feed playlist and play the first one
             playlist = xbmc.PlayList(xbmc.PLAYLIST_VIDEO)
             playlist.clear()
             for video in stream:
-                li = xbmcgui.ListItem(label=video['title'], path=video['url'], iconImage='DefaultVideo.png')
+                li = xbmcgui.ListItem(label=video['title'], path=video['url'])
+                li.setArt({'icon': 'DefaultVideo.png'})
                 playlist.add(video['url'], li)
             stream = stream[0]
         if stream:
@@ -53,10 +53,12 @@ class RtvsXBMCContentProvider(xbmcprovider.XBMCMultiResolverContentProvider):
             if 'headers' in stream.keys():
                 for header in stream['headers']:
                     stream['url'] += '|%s=%s' % (header, stream['headers'][header])
-            print 'Sending %s to player' % stream['url']
-            li = xbmcgui.ListItem(path=stream['url'], iconImage='DefaulVideo.png')
+            print('Sending %s to player' % stream['url'])
+            li = xbmcgui.ListItem(path=stream['url'])
+            li.setArt({'icon': 'DefaultVideo.png'})
             if stream['quality'] == 'adaptive':
                 li.setProperty('inputstreamaddon','inputstream.adaptive')
+                li.setProperty('inputstream', 'inputstream.adaptive')
                 li.setProperty('inputstream.adaptive.manifest_type','hls')
             xbmcplugin.setResolvedUrl(int(sys.argv[1]), True, li)
             xbmcutil.load_subtitles(stream['subs'])
@@ -102,7 +104,7 @@ class RtvsXBMCContentProvider(xbmcprovider.XBMCMultiResolverContentProvider):
         item.update({'url':url})
         try:
             return self.provider.resolve(item, select_cb=select_cb)
-        except ResolveException, e:
+        except ResolveException as e:
             self._handle_exc(e)
 
 params = util.params()

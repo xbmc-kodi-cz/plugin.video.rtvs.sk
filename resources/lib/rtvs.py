@@ -23,18 +23,15 @@
 import re
 import os
 import urllib
-import urllib2
 import shutil
 import traceback
-import cookielib
-import md5
+from http import cookiejar
+import hashlib
 import calendar
 from time import sleep
 from datetime import date
-
 import util
 from provider import ContentProvider
-
 import json
 import xbmc, xbmcaddon, xbmcgui
 
@@ -55,9 +52,7 @@ LISTING_ITER_RE = '<td class=(\"day\"|\"active day\")>\s+<a href=[\'\"](?P<url>[
 EPISODE_RE = '<div class=\"article-header\">\s+?<h2>(?P<title>[^<]+)</h2>.+?(<div class=\"span6">\s+?<div[^>]+?>(?P<plot>[^<]+)</div>)?'
 
 def to_unicode(text, encoding='utf-8'):
-    if isinstance(text, unicode):
-        return text
-    return unicode(text, encoding, errors='replace')
+    return text
 
 def get_streams_from_manifest_url(url):
     result = []
@@ -101,8 +96,8 @@ class RtvsContentProvider(ContentProvider):
 
     def __init__(self, username=None, password=None, filter=None, tmp_dir='/tmp'):
         ContentProvider.__init__(self, 'rtvs.sk', 'http://www.rtvs.sk/televizia/archiv', username, password, filter, tmp_dir)
-        opener = urllib2.build_opener(urllib2.HTTPCookieProcessor(cookielib.LWPCookieJar()))
-        urllib2.install_opener(opener)
+        opener = urllib.request.build_opener(urllib.request.HTTPCookieProcessor(cookiejar.LWPCookieJar()))
+        urllib.request.install_opener(opener)
         if not os.path.exists(self.tmp_dir):
             os.makedirs(self.tmp_dir)
 
@@ -180,11 +175,11 @@ class RtvsContentProvider(ContentProvider):
         item['title'] = '0-9'
         item['url'] = '?l=9&ord=az'
         self._filter(result, item)
-        for c in xrange(65, 91, 1):
-            chr = str(unichr(c))
+        for c in range(65, 91, 1):
+            uchr = str(chr(c))
             item = self.dir_item()
-            item['title'] = chr
-            item['url'] = '?l=%s&ord=az' % chr.lower()
+            item['title'] = uchr
+            item['url'] = '?l=%s&ord=az' % uchr.lower()
             self._filter(result, item)
         return result
 
@@ -355,8 +350,8 @@ class RtvsContentProvider(ContentProvider):
 
     def _get_image_path(self, name):
         local = self.tmp_dir
-        m = md5.new()
-        m.update(name)
+        m = hashlib.md5()
+        m.update(name.encode("utf-8"))
         image = os.path.join(local, m.hexdigest() + '_img.png')
         return image
 
