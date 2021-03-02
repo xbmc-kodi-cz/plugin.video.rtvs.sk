@@ -21,14 +21,9 @@
 # */
 
 import re
-import os
 import urllib
-import shutil
-import traceback
 from http import cookiejar
-import hashlib
 import calendar
-from time import sleep
 from datetime import date
 import util
 from provider import ContentProvider
@@ -72,34 +67,12 @@ def get_streams_from_manifest_url(url):
     result.sort(key=lambda x:x['bandwidth'], reverse=True)
     return result
 
-def is_kodi_leia():
-    version = re.split("[, \-!?:]+", xbmc.getInfoLabel('System.BuildVersion'))[0]
-    if (float(version) >= 18):
-        #chceck if is inputstream.adaptive present
-        payload = {'jsonrpc': '2.0','id': 1,'method': 'Addons.GetAddonDetails','params': {'addonid': 'inputstream.adaptive','properties': ['enabled']}}
-        response = xbmc.executeJSONRPC(json.dumps(payload))
-        data = json.loads(response)
-        print(data)
-        if ('error' not in data.keys() and 
-                'result' in data.keys() and 
-                'addon' in data['result'].keys() and 
-                'enabled' in data['result']['addon'].keys() and 
-                data['result']['addon']['enabled']):
-            return True
-        else:
-            scriptid = 'plugin.video.rtvs.sk'
-            addon = xbmcaddon.Addon(id=scriptid)
-            xbmcgui.Dialog().ok(addon.getLocalizedString(31010), addon.getLocalizedString(31011), addon.getLocalizedString(31012), addon.getLocalizedString(31013))
-    return False
-
 class RtvsContentProvider(ContentProvider):
 
     def __init__(self, username=None, password=None, filter=None, tmp_dir='/tmp'):
         ContentProvider.__init__(self, 'rtvs.sk', 'http://www.rtvs.sk/televizia/archiv', username, password, filter, tmp_dir)
         opener = urllib.request.build_opener(urllib.request.HTTPCookieProcessor(cookiejar.LWPCookieJar()))
         urllib.request.install_opener(opener)
-        if not os.path.exists(self.tmp_dir):
-            os.makedirs(self.tmp_dir)
 
     def _fix_url(self, url):
         if url.startswith('/json/') or url.startswith('/televizia/archiv/'):
@@ -206,39 +179,29 @@ class RtvsContentProvider(ContentProvider):
 
     def list_az(self, page):
         result = []
-        images = []
         page = util.substr(page, START_AZ, END_AZ)
         for m in re.finditer(AZ_ITER_RE, page, re.IGNORECASE | re.DOTALL):
-            img = {'remote':self._fix_url(m.group('img')),
-                   'local' :self._get_image_path(self._fix_url(m.group('img')))}
             item = self.dir_item()
             semicolon = m.group('title').find(':')
             if semicolon != -1:
                 item['title'] = m.group('title')[:semicolon].strip()
             else:
                 item['title'] = m.group('title')
-            item['img'] = img['local']
+            item['img'] = self._fix_url(m.group('img'))
             item['url'] = m.group('url')
             self._filter(result, item)
-            images.append(img)
-        self._get_images(images)
         return result
 
     def list_date(self, page):
         result = []
-        images = []
         page = util.substr(page, START_DATE, END_DATE)
         for m in re.finditer(DATE_ITER_RE, page, re.IGNORECASE | re.DOTALL):
-            img = {'remote':self._fix_url(m.group('img')),
-                   'local' :self._get_image_path(self._fix_url(m.group('img')))}
             item = self.video_item()
             item['title'] = "%s (%s)" % (m.group('title'), m.group('time'))
-            item['img'] = img['local']
+            item['img'] = self._fix_url(m.group('img'))
             item['url'] = m.group('url')
             item['menu'] = {'$30070':{'list':item['url'], 'action-type':'list'}}
             self._filter(result, item)
-            images.append(img)
-        self._get_images(images)
         return result
 
     def list_episodes(self, page):
@@ -263,7 +226,6 @@ class RtvsContentProvider(ContentProvider):
             item['url'] = re.sub('&amp;', '&', m.group('url'))
             self._filter(result, item)
         result.sort(key=lambda x:int(x['date']), reverse=True)
-
         item = self.dir_item()
         item['type'] = 'prev'
         item['url'] = prev_url
@@ -288,23 +250,14 @@ class RtvsContentProvider(ContentProvider):
             videodata = util.json.loads(data)['clip']
             url = videodata['sources'][0]['src']
             url = ''.join(url.split()) # remove whitespace \n from URL
-            if is_kodi_leia():
-                #return playlist with adaptive flag
+            #process m3u8 playlist
+            for stream in get_streams_from_manifest_url(url):
                 item = self.video_item()
                 item['title'] = videodata.get('title','')
-                item['url'] = url
-                item['quality'] = 'adaptive'
+                item['url'] = stream['url']
+                item['quality'] = stream['quality']
                 item['img'] = videodata.get('image','')
                 result.append(item)
-            else:
-                #process m3u8 playlist
-                for stream in get_streams_from_manifest_url(url):
-                    item = self.video_item()
-                    item['title'] = videodata.get('title','')
-                    item['url'] = stream['url']
-                    item['quality'] = stream['quality']
-                    item['img'] = videodata.get('image','')
-                    result.append(item)
         else:
             video_id = item['url'].split('/')[-1]
             self.info("<resolve> videoid: %s" % video_id)
@@ -312,23 +265,14 @@ class RtvsContentProvider(ContentProvider):
             for v in videodata['clip']['sources']:
                 url =  v['src']
                 if '.m3u8' in url:
-                    if is_kodi_leia():
-                        #return playlist with adaptive flag
+                    #process m3u8 playlist
+                    for stream in get_streams_from_manifest_url(url):
                         item = self.video_item()
                         item['title'] = videodata.get('title','')
                         item['surl'] = item['title']
-                        item['quality'] = 'adaptive'
-                        item['url'] = url
+                        item['url'] = stream['url']
+                        item['quality'] = stream['quality']
                         result.append(item)
-                    else:
-                        #process m3u8 playlist
-                        for stream in get_streams_from_manifest_url(url):
-                            item = self.video_item()
-                            item['title'] = videodata.get('title','')
-                            item['surl'] = item['title']
-                            item['url'] = stream['url']
-                            item['quality'] = stream['quality']
-                            result.append(item)
         self.info("<resolve> playlist: %d items" % len(result))
         map(self.info, ["<resolve> item(%d): title= '%s', url= '%s'" % (i, it['title'], it['url']) for i, it in enumerate(result)])
         if len(result) > 0 and select_cb:
@@ -348,16 +292,4 @@ class RtvsContentProvider(ContentProvider):
             pages.append([page, args])
         return pages
 
-    def _get_image_path(self, name):
-        local = self.tmp_dir
-        m = hashlib.md5()
-        m.update(name.encode("utf-8"))
-        image = os.path.join(local, m.hexdigest() + '_img.png')
-        return image
-
-    def _get_images(self, images):
-        def download(remote, local):
-            util.save_data_to_file(util.request(remote), local)
-        not_cached = [(img['remote'], img['local'])
-                       for img in images if not os.path.exists(img['local'])]
-        util.run_parallel_in_threads(download, not_cached)
+  
