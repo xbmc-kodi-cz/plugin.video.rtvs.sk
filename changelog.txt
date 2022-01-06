@@ -1,6 +1,9 @@
+[B]1.9.4:[/B]
+- added radio archive Extra
+- added radio archive Plus
 [B]1.9.3:[/B]
-- added Radio live
-- added Radio archive
+- added radio live
+- added radio archive
 - added support Kodi 18
 [B]1.9.2:[/B]
 - added RTVS Sport

@@ -65,6 +65,21 @@ RADIO_STATION_START = '<div class=\"box box--live\">'
 RADIO_STATION_END = '<!-- FOOTER -->'
 RADIO_STATION_ITER_RE = 'href=\"(?P<url>[^\"]+)\".+?title=\"(?P<title>[^\"]+)'
 
+RADIO_EXTRA_START = '<ul class=\"router--archive-extra\">'
+RADIO_EXTRA_END = '<!-- ROZHLASOVE STANICE-->'
+RADIO_EXTRA_ITER_RE = 'title=\"(?P<title>[^\"]+).*?href=\"(?P<url>[^\"]+)\".+?subtitle\">(?P<subtitle>[^<]+|)'
+
+RADIO_PLUS_START = '<table width=\"100%\">'
+RADIO_PLUS_END = '</table>'
+# RADIO_PLUS_ITER_RE = '<a class="a210_page a210_page" title="(?P<title>[^\"]+)" href="(?P<url>[^\"]+).*?src="(?P<img>[^\"]+).*?<br \/>\((?P<popis>[^)]+)'
+# RADIO_PLUS_ITER_RE = '<a class=\"a210_page a210_page\" title=\"(?P<title>[^\"]+)\" href=\"(?P<url>[^\"]+).*?src=\"(?P<img>[^\"]+)\"'
+RADIO_PLUS_ITER_RE = 'src=\"(?P<img>[^\"]+)\".*?<a class=\"a210_page a210_page\" title=\"(?P<title>[^\"]+)\" href=\"(?P<url>[^\"]+)\".*?(?:<br \/>|<\/b>)\((?P<popis>[^\)]+)\)'
+
+RADIO_PLUS_START_CAST = '<div class=\"col-12 col-md-8 article__body\">'
+RADIO_PLUS_END_CAST = '<!-- ROZHLASOVE STANICE-->'
+RADIO_PLUS_ITER_RE_CAST = '<strong class="player-title">(?P<title>[^\<]+)<\/strong>.*?loading="lazy" src="(?P<url>[^\"]+)'
+
+
 START_LISTING = "<div class='calendar modal-body'>"
 END_LISTING = '</table>'
 LISTING_PAGER_RE = "<a class=\'prev calendarRoller' href=\'(?P<prevurl>[^\']+)\'.+?<a class=\'next calendarRoller\' href=\'(?P<nexturl>[^\']+)"
@@ -73,6 +88,8 @@ LISTING_ITER_RE = '<td class=(\"day\"|\"active day\")>\s+<a href=[\'\"](?P<url>[
 
 EPISODE_RE = '<div class=\"article-header\">\s+?<h2>(?P<title>[^<]+)</h2>.+?(<div class=\"span6">\s+?<div[^>]+?>(?P<plot>[^<]+)</div>)?'
 
+COLOR_START = '[COLOR FFB2D4F5]'
+COLOR_END = '[/COLOR]'
 def to_unicode(text, encoding='utf-8'):
     return text
 
@@ -93,6 +110,25 @@ def get_streams_from_manifest_url(url):
         result.append(stream)
     result.sort(key=lambda x:x['bandwidth'], reverse=True)
     return result
+
+def _fix_date(date):
+    print (date)
+    # return date
+    if date[0] == ' ':
+        date = date[1:]
+    brb = date.split(' ')
+    d, m, y = brb[0].split('.')
+    if len(d) == 1: d = '0' + d
+    if len(m) == 1: m = '0' + m
+    if len(brb) > 1:
+        return '{}.{}.{} {} '.format(d, m, y, brb[1])
+    else:
+        return '{}.{}.{}'.format(d, m, y)
+
+def _fix_space(text):
+    # text = re.sub('^[ \t]{1,}|[ \t]{1,}$', '', text)
+    text = re.sub('^[ \t\r\n]{1,}|[ \t\r\n]{1,}$', '', text)
+    return text
 
 class RtvsContentProvider(ContentProvider):
 
@@ -125,7 +161,7 @@ class RtvsContentProvider(ContentProvider):
     def list(self, url):
         # self.info('== list ==')
         # self.info('url=' + url )
-      #  self.info('base_url=' + self.base_url)
+        # self.info('base_url=' + self.base_url)
 
         if url.find('#az#') == 0:
             return self.az()
@@ -146,6 +182,18 @@ class RtvsContentProvider(ContentProvider):
             self.base_url = self._get_url(True)
             return self.date_radio(int(year), int(month))
 
+        elif url.find("/archiv/extra/vzdelavanie") != -1:
+            self.base_url = self._get_url(True)
+            return self.get_radio_archiv_plus()
+
+        elif url.find("?radio=plus") != -1:
+            self.base_url = self._get_url(True)
+            return self.get_radio_archiv_plus_cast(url)
+
+        elif url.find("#extra_radio#") == 0:
+            self.base_url = self._get_url(True)
+            return self.get_radio_archiv_extra()
+
         elif url.find('ord=az') != -1 and url.find('l=') != -1:
             self.info('AZ listing: %s' % url)
             if url.find('&radio=1') == -1:
@@ -154,6 +202,10 @@ class RtvsContentProvider(ContentProvider):
                 self.base_url = self._get_url(True)
                 return self.list_az_radio(util.request(self._fix_url_radio(url)))
         
+        elif url.find('/archiv/extra/') != -1:
+            self.base_url = self._get_url(True)
+            return self.list_date_radio(util.request(self._fix_url_radio(url)))
+
         elif url.find('ord=dt') != -1 and url.find('date=') != -1:
             self.info('DATE listing: %s' % url)
             if url.find('&radio=1') == -1:
@@ -209,6 +261,11 @@ class RtvsContentProvider(ContentProvider):
         item['title'] = '[B][COLOR FFB2D4F5]Rádio:[/COLOR] Podľa dátumu[/B]'
         item['url'] = "#date_radio#%d.%d" % (d.month, d.year)
         result.append(item)
+
+        item = self.dir_item()
+        item['title'] = '[B][COLOR FFB2D4F5]Rádio:[/COLOR] Extra[/B]'
+        item['url'] = "#extra_radio#%d.%d" % (d.month, d.year)
+        result.append(item)
         
         return result
 
@@ -226,21 +283,6 @@ class RtvsContentProvider(ContentProvider):
         item['img'] = videodata.get('image','')
         return item
 
-    # def getInfoFromWebRadio(self, item):
-    #     # channel_id = item['url'].split('.')[1]
-    #     data = util.request(url)
-    #     videodata = util.json.loads(data)['clip']
-    #     url = videodata['sources'][0]['src']
-    #     url = ''.join(url.split())
-    #     # item['plot'] = videodata.get('title','')
-    #     title = videodata.get('title','')
-    #     if title != '':
-    #         item['title'] += ':  ' + title
-    #     item['plot'] = videodata.get('description','')
-    #     item['img'] = videodata.get('image','')
-    #     return item
-
-
     def get_list_radios(self):
         result = []
         # self.info ('== get_list_radios ==')
@@ -255,18 +297,62 @@ class RtvsContentProvider(ContentProvider):
             self._filter(result, item)
         return result
 
-    def get_live_radio(self, url):
+    def get_radio_archiv_extra(self):
         result = []
-        # self.info ('== get_list_radios ==')
+        # self.info ('== get_radio_archiv_extra ==')
         # self.info(page)
-        page = util.request('http://www.rtvs.sk/radio/radia')
-        page = util.substr(page, RADIO_STATION_START, RADIO_STATION_END)
+        page = util.request('http://www.rtvs.sk/radio/archiv/extra')
+        page = util.substr(page, RADIO_EXTRA_START, RADIO_EXTRA_END)
         # self.info(page)
-        for m in re.finditer(RADIO_STATION_ITER_RE, page, re.IGNORECASE | re.DOTALL):
-            item = self.video_item()
+        for m in re.finditer(RADIO_EXTRA_ITER_RE, page, re.IGNORECASE | re.DOTALL):
+            # item = self.video_item()
+            item = self.dir_item()  
             item['title'] = m.group('title')
-            item['url'] = m.group('url')
+            item['url'] = 'http://www.rtvs.sk' + m.group('url')
+            item['plot'] = m.group('subtitle')
             item['menu'] = {'$30070':{'list':item['url'], 'action-type':'list'}}
+            # self.info(item)
+            self._filter(result, item)
+        return result
+
+    def get_radio_archiv_plus(self):
+        result = []
+        # self.info ('== get_radio_archiv_plus ==')
+        # self.info(page)
+        page = util.request('http://www.rtvs.sk/radio/archiv-plus')
+        page = util.substr(page, RADIO_PLUS_START, RADIO_PLUS_END)
+        # self.info(page)
+        for m in re.finditer(RADIO_PLUS_ITER_RE, page, re.IGNORECASE | re.DOTALL):
+            # item = self.video_item()
+            item = self.dir_item()  
+            item['title'] = m.group('title')
+            item['url'] = 'http://www.rtvs.sk' + m.group('url') + '?radio=plus'
+            item['plot'] = m.group('popis')
+            item['img'] = m.group('img')
+            item['menu'] = {'$30070':{'list':item['url'], 'action-type':'list'}}
+            # self.info(item)
+            self._filter(result, item)
+        return result
+
+    def get_radio_archiv_plus_cast(self, url):
+        result = []
+        # self.info ('== get_radio_archiv_plus_cast ==')
+        # self.info(page)
+        page = util.request(url)
+        page = util.substr(page, RADIO_PLUS_START_CAST, RADIO_PLUS_END_CAST)
+        # self.info(page)
+        for m in re.finditer(RADIO_PLUS_ITER_RE_CAST, page, re.IGNORECASE | re.DOTALL):
+            item = self.video_item()
+            # item = self.dir_item()  
+            item['title'] = _fix_space(m.group('title'))
+            # url = m.group('url').split('/')[-1]
+
+            # item['url'] = 'http://www.rtvs.sk/json/audio5f.json?id=' + url
+
+            item['url'] = m.group('url')
+            # item['plot'] = m.group('popis')
+            # item['img'] = m.group('img')
+            # item['menu'] = {'$30070':{'list':item['url'], 'action-type':'list'}}
             # self.info(item)
             self._filter(result, item)
         return result
@@ -360,7 +446,8 @@ class RtvsContentProvider(ContentProvider):
             if d > today:
                 break
             item = self.dir_item()
-            item['title'] = "%d.%d %d" % (d.day, d.month, d.year)
+            #item['title'] = "%d.%d %d" % (d.day, d.month, d.year)
+            item['title'] = _fix_date ("%d.%d.%d" % (d.day, d.month, d.year))
             item['url'] = "?date=%d-%02d-%02d&ord=dt" % (d.year, d.month, d.day)
             self._filter(result, item)
         result.reverse()
@@ -383,7 +470,8 @@ class RtvsContentProvider(ContentProvider):
             if d > today:
                 break
             item = self.dir_item()
-            item['title'] = "%d.%d %d" % (d.day, d.month, d.year)
+            # item['title'] = "%d.%d %d" % (d.day, d.month, d.year)
+            item['title'] = _fix_date ("%d.%d.%d" % (d.day, d.month, d.year))
             item['url'] = "?date=%d-%02d-%02d&ord=dt&radio=1" % (d.year, d.month, d.day)
             self._filter(result, item)
         result.reverse()
@@ -425,7 +513,7 @@ class RtvsContentProvider(ContentProvider):
 
     def list_date(self, page):
         result = []
-        # self.info ('== list_date ==')
+        self.info ('== list_date ==')
         page = util.substr(page, START_DATE, END_DATE)
         page = re.sub('<p class=\"perex\"></p>', '<p class=\"perex\">&nbsp;</p>', page)
         # self.info(page)
@@ -445,18 +533,35 @@ class RtvsContentProvider(ContentProvider):
         result = []
         self.info ('== list_date_radio ==')
         # self.info(page)
+        page2 = util.substr(page, '<li class=\"page-item active\">', '</nav>')
+        self.info(page2)
+        # if page2:
+        #     prev_url = re.search('page-item active">.+?href=\"(?P<url>\/[^\"]+)\".+?title=\"(?P<title>[^\"]+)\"', page, re.IGNORECASE | re.DOTALL).group('url')
+        #     # self.info('prev_url = ' + prev_url)
+        #     item = self.dir_item()
+        #     item['type'] = 'next'
+        #     item['url'] = 'http://www.rtvs.sk' + prev_url
+        #     result.append(item)
+        #item['url'] = "#date#%d.%d&radio=1" % (prev_month, prev_year)
         page = util.substr(page, START_DATE_RADIO, END_DATE_RADIO)
-        #page = re.sub('<p class=\"perex\"></p>', '<p class=\"perex\">&nbsp;</p>', page)
-        # self.info(page)
         for m in re.finditer(DATE_ITER_RE_RADIO, page, re.IGNORECASE | re.DOTALL):
             item = self.video_item()
-            item['title'] = "%s (%s)" % (m.group('title'), m.group('date'))
+            #item['title'] = "%s (%s)" % (m.group('title'), m.group('date'))
+            item['title'] = "%s%s%s %s" % (COLOR_START, _fix_date(m.group('date')), COLOR_END, m.group('title'))
             #item['img'] = self._fix_url_radio(m.group('img'))
             item['url'] = m.group('url') #+ '?radio=1'
             item['plot'] = m.group('series')
             item['menu'] = {'$30070':{'list':item['url'], 'action-type':'list'}}
             # self.info(item)
             self._filter(result, item)
+        if page2:
+            prev_url = re.search('page-item active">.+?href=\"(?P<url>\/[^\"]+)\".+?title=\"(?P<title>[^\"]+)\"', page, re.IGNORECASE | re.DOTALL).group('url')
+            
+            # self.info('prev_url = ' + prev_url)
+            item = self.dir_item()
+            item['type'] = 'next'
+            item['url'] = 'http://www.rtvs.sk' + prev_url
+            result.append(item)
         return result
 
     def list_episodes(self, page):
@@ -539,6 +644,20 @@ class RtvsContentProvider(ContentProvider):
             item['type'] = 'audio/mp3'
             #item['img'] = videodata.get('image','')
             result.append(item)
+        
+        elif item['url'].find('/embed/audio/') != -1:
+                audio_id = item['url'].split('/')[-1]
+                # item['url'] = 'http://www.rtvs.sk/json/audio5f.json?id=' + url
+                audiodata = util.json.loads(util.request("http://www.rtvs.sk/json/audio5f.json?id=" + audio_id))
+                for v in audiodata['playlist'][0]['sources']:
+                    url =  v['src']
+                    if '.mp3' in url:                    
+                        item['title'] = audiodata.get('title','')
+                        item['surl'] = item['title']
+                        item['url'] = url
+                        item['type'] = v['type']
+                        result.append(item)
+
 
         elif item['url'].find('/radio/') != -1:
             audio_id = item['url'].split('/')[-1]
