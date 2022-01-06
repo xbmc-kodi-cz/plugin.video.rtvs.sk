@@ -1,8 +1,8 @@
 <?xml version='1.0' encoding='utf-8'?>
-<addon id="plugin.video.rtvs.sk" name="rtvs.sk" provider-name="Maros Ondrasek" version="1.9.1">
+<addon id="plugin.video.rtvs.sk" name="rtvs.sk" provider-name="Maros Ondrasek" version="1.9.2">
     <requires>
         <import addon="xbmc.python" version="3.0.0" />
-        <import addon="script.module.stream.resolver" version="1.6.13" />
+        <import addon="script.module.stream.resolver" version="1.7.3" />
     </requires>
     <extension library="default.py" point="xbmc.python.pluginsource" provides="video">
         <provides>video</provides>

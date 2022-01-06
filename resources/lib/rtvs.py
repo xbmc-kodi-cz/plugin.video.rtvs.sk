@@ -36,7 +36,7 @@ AZ_ITER_RE = '<a title=\"(?P<title>[^"]+)\"(.+?)href=\"(?P<url>[^"]+)\"(.+?)<img
 
 START_DATE = '<div class=\"row tv__archive tv__archive--date\" data-js-tabs>'
 END_DATE = END_AZ
-DATE_ITER_RE = '<div class=\"media\">\s*<a href=\"(?P<url>[^\"]+)\"[^<]+>\s*<img src=\"(?P<img>[^\"]+)\".+?<\/a>\s*<div class=\"media__body\">.+?<div class=\"program time--start\">(?P<time>[^\<]+)<span>.+?<a class=\"link\".+?title=\"(?P<title>[^\"]+)\">.+?<\/div>'
+DATE_ITER_RE = '<div class=\"media\">\s*<a href=\"(?P<url>[^\"]+)\".+?<img src=\"(?P<img>[^\"]+)\".+?<\/a>\s*<div class=\"media__body\">.+?<div class=\"program time--start\">(?P<time>[^\<]+)<span>.+?<a class=\"link\".+?title=\"(?P<title>[^\"]+)\">.+?<p class=\"perex\">(?P<plot>[^<]+)<\/p>'
 
 START_LISTING = "<div class='calendar modal-body'>"
 END_LISTING = '</table>'
@@ -123,23 +123,53 @@ class RtvsContentProvider(ContentProvider):
         result.append(item)
         return result
 
+    def getInfoFromWeb(self, item):
+        channel_id = item['url'].split('.')[1]
+        data = util.request("http://www.rtvs.sk/json/live5f.json?c=%s&b=mozilla&p=linux&v=47&f=1&d=1"%(channel_id))
+        videodata = util.json.loads(data)['clip']
+        url = videodata['sources'][0]['src']
+        url = ''.join(url.split())
+        # item['plot'] = videodata.get('title','')
+        title = videodata.get('title','')
+        if title != '':
+            item['title'] += ':  ' + title
+        item['plot'] = videodata.get('description','')
+        item['img'] = videodata.get('image','')
+        return item
+
     def live(self):
         result = []
+
         item = self.video_item("live.1")
         item['title'] = "STV 1"
+        item = self.getInfoFromWeb(item)
         result.append(item)
+
         item = self.video_item("live.2")
         item['title'] = "STV 2"
+        item = self.getInfoFromWeb(item)
         result.append(item)
+
         item = self.video_item("live.3")
         item['title'] = "STV 3"
+        item = self.getInfoFromWeb(item)
         result.append(item)
+
+        item = self.video_item("live.15")
+        item['title'] = "STV Šport"
+        item = self.getInfoFromWeb(item)
+        result.append(item)        
+
         item = self.video_item("live.4")
         item['title'] = "STV Online"
+        item = self.getInfoFromWeb(item)
         result.append(item)
+
         item = self.video_item("live.5")
         item['title'] = "STV NRSR"
+        item = self.getInfoFromWeb(item)
         result.append(item)
+        
         return result
 
     def az(self):
@@ -195,12 +225,16 @@ class RtvsContentProvider(ContentProvider):
     def list_date(self, page):
         result = []
         page = util.substr(page, START_DATE, END_DATE)
+        page = re.sub('<p class=\"perex\"></p>', '<p class=\"perex\">&nbsp;</p>', page)
+        # self.info(page)
         for m in re.finditer(DATE_ITER_RE, page, re.IGNORECASE | re.DOTALL):
             item = self.video_item()
             item['title'] = "%s (%s)" % (m.group('title'), m.group('time'))
             item['img'] = self._fix_url(m.group('img'))
             item['url'] = m.group('url')
+            item['plot'] = m.group('plot')
             item['menu'] = {'$30070':{'list':item['url'], 'action-type':'list'}}
+            # self.info(item)
             self._filter(result, item)
         return result
 
