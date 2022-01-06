@@ -1,10 +1,14 @@
 [B]1.9.2:[/B]
+- added Radio live
+- added Radio archive
+- added support Kodi 18
+[B]1.9.1:[/B]
 - added RTVS Sport
 - added info and img to Live
 - fixed archive by Date and 
 - added descriptions archive by Date
 - fixed settings menu
-[B]1.9.1:[/B]
+[B]1.9.0:[/B]
 - Kodi 19 Matrix update
 [B]1.8.0:[/B]
 - Kodi 18 Leia update
