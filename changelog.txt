@@ -1,8 +1,8 @@
-[B]1.9.2:[/B]
+[B]1.9.3:[/B]
 - added Radio live
 - added Radio archive
 - added support Kodi 18
-[B]1.9.1:[/B]
+[B]1.9.2:[/B]
 - added RTVS Sport
 - added info and img to Live
 - fixed archive by Date and 
