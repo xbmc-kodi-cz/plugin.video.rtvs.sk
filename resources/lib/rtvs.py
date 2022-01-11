@@ -36,7 +36,7 @@ AZ_ITER_RE = '<a title=\"(?P<title>[^"]+)\"(.+?)href=\"(?P<url>[^"]+)\"(.+?)<img
 
 START_DATE = '<div class=\"row tv__archive tv__archive--date\" data-js-tabs>'
 END_DATE = END_AZ
-DATE_ITER_RE = '<div class=\"media\">\s*<a href=\"(?P<url>[^\"]+)\"[^<]+>\s*<img src=\"(?P<img>[^\"]+)\".+?<\/a>\s*<div class=\"media__body\">.+?<div class=\"program time--start\">(?P<time>[^\<]+)<span>.+?<a class=\"link\".+?title=\"(?P<title>[^\"]+)\">.+?<\/div>'
+DATE_ITER_RE = '<div class=\"media\">\s*<a href=\"(?P<url>[^\"]+)\".+?<img src=\"(?P<img>[^\"]+)\".+?<\/a>\s*<div class=\"media__body\">.+?<div class=\"program time--start\">(?P<time>[^\<]+)<span>.+?<a class=\"link\".+?title=\"(?P<title>[^\"]+)\">.+?<\/div>'
 
 START_LISTING = "<div class='calendar modal-body'>"
 END_LISTING = '</table>'
@@ -139,6 +139,9 @@ class RtvsContentProvider(ContentProvider):
         result.append(item)
         item = self.video_item("live.5")
         item['title'] = "STV NRSR"
+        result.append(item)
+        item = self.video_item("live.15")
+        item['title'] = "STV Sport"
         result.append(item)
         return result
 
