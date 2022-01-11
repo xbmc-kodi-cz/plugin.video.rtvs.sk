@@ -291,5 +291,3 @@ class RtvsContentProvider(ContentProvider):
                 break
             pages.append([page, args])
         return pages
-
-  
