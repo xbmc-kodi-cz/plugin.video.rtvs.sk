@@ -140,6 +140,9 @@ class RtvsContentProvider(ContentProvider):
         item = self.video_item("live.5")
         item['title'] = "STV NRSR"
         result.append(item)
+        item = self.video_item("live.15")
+        item['title'] = "STV Šport"
+        result.append(item)
         return result
 
     def az(self):
