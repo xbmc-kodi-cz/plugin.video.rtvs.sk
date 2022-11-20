@@ -1,8 +1,8 @@
 <?xml version='1.0' encoding='utf-8'?>
-<addon id="plugin.video.rtvs.sk" name="rtvs.sk" provider-name="Maros Ondrasek" version="1.9.4">
+<addon id="plugin.video.rtvs.sk" name="rtvs.sk" provider-name="Jastrab, Maros Ondrasek" version="1.9.5">
     <requires>
         <import addon="xbmc.python" version="3.0.0" />  <!-- xbmc.python 2.1.0 -->
-        <import addon="script.module.stream.resolver" version="1.7.13"/> <!-- script.module.stream.resolver 1.6.13 -->
+        <import addon="script.module.stream.resolver" version="1.7.3"/> <!-- script.module.stream.resolver 1.6.13 -->
     </requires>
     <extension library="default.py" point="xbmc.python.pluginsource" provides="video">
         <provides>video</provides>
@@ -15,7 +15,7 @@
         <description lang="cs">Sledujte TV archiv zo serveru rtvs.sk</description>
         <description lang="sk">Sledujte TV archív zo serveru rtvs.sk</description>
         <platform>all</platform>
-        <source>https://github.com/kodi-czsk/plugin.video.rtvs.sk</source>
+        <source>https://github.com/jastrab/plugin.video.rtvs.sk</source>
         <assets>
             <icon>icon.png</icon>
         </assets>

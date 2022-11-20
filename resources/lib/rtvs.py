@@ -1,7 +1,7 @@
 # -*- coding: UTF-8 -*-
 # /*
 # *      Copyright (C) 2013 Maros Ondrasek
-# *
+# *      Update        2022 Jastrab
 # *
 # *  This Program is free software; you can redistribute it and/or modify
 # *  it under the terms of the GNU General Public License as published by
@@ -52,7 +52,7 @@ START_AZ_RADIO = '<li class=\"list--radio-series__list list__headers\">'
 END_AZ_RADIO = '<div class=\"box box--live\">'
 AZ_ITER_RE_RADIO = 'title=\"(?P<title>[^\"]+)\" href=\"(?P<url>[^\"]+)\".+?__station">(?P<station>[^\t]+).+?__series">(?P<series>[^<]+).+?__date">(?P<date>[^<]+)'
 
-START_DATE = '<div class=\"row tv__archive tv__archive--date\" data-js-tabs>'
+START_DATE = '<div class=\"row tv__archive tv__archive--date\">'
 END_DATE = END_AZ
 DATE_ITER_RE = '<div class=\"media\">\s*<a href=\"(?P<url>[^\"]+)\".+?<img src=\"(?P<img>[^\"]+)\".+?<\/a>\s*<div class=\"media__body\">.+?<div class=\"program time--start\">(?P<time>[^\<]+)<span>.+?<a class=\"link\".+?title=\"(?P<title>[^\"]+)\">.+?<p class=\"perex\">(?P<plot>[^<]+)<\/p>'
 
