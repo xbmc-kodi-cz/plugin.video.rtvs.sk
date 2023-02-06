@@ -1,3 +1,5 @@
+[B]1.9.7:[/B]
+- fix version script.module.stream.resolver
 [B]1.9.6:[/B]
 - add support Kodi 20
 [B]1.9.5:[/B]
