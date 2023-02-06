@@ -1,3 +1,24 @@
+[B]1.9.7:[/B]
+- fix version script.module.stream.resolver
+[B]1.9.6:[/B]
+- add support Kodi 20
+[B]1.9.5:[/B]
+- fix video archive Date
+[B]1.9.4:[/B]
+- added radio archive Extra
+- added radio archive Plus
+[B]1.9.3:[/B]
+- added radio live
+- added radio archive
+- added support Kodi 18
+[B]1.9.2:[/B]
+- added RTVS Sport
+- added info and img to Live
+- fixed archive by Date and 
+- added descriptions archive by Date
+- fixed settings menu
+[B]1.9.0:[/B]
+- Kodi 19 Matrix update
 [B]1.8.0:[/B]
 - Kodi 18 Leia update
 - streams from archive was stuttering due ffmpeg bug, solved with InputStream Adaptive

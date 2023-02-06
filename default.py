@@ -110,5 +110,9 @@ class RtvsXBMCContentProvider(xbmcprovider.XBMCMultiResolverContentProvider):
 params = util.params()
 if params == {}:
     xbmcutil.init_usage_reporting(__scriptid__)
-RtvsXBMCContentProvider(rtvs.RtvsContentProvider(tmp_dir=xbmc.translatePath(__addon__.getAddonInfo('profile'))), settings, __addon__).run(params)
+try:
+    import xbmcvfs
+    RtvsXBMCContentProvider(rtvs.RtvsContentProvider(tmp_dir=xbmcvfs.translatePath(__addon__.getAddonInfo('profile'))), settings, __addon__).run(params)
+except:
+    RtvsXBMCContentProvider(rtvs.RtvsContentProvider(tmp_dir=xbmc.translatePath(__addon__.getAddonInfo('profile'))), settings, __addon__).run(params)
 

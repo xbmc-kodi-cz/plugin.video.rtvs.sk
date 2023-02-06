@@ -43,3 +43,6 @@ msgctxt "#30070"
 msgid "Related videos"
 msgstr "Podobná videa"
 
+msgctxt "#30103"
+msgid "General"
+msgstr "Hlavní"
