@@ -1,3 +1,5 @@
+[B]1.9.8:[/B]
+- fix video archive Date
 [B]1.9.7:[/B]
 - fix version script.module.stream.resolver
 [B]1.9.6:[/B]
