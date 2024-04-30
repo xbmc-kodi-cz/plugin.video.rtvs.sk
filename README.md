@@ -1,6 +1,7 @@
 Kodi plugin pre prehrávanie RTVS - rtvs.sk
 - jednoduhé a prehľadné prehrávanie archívu z rtvs v kodi
-- plugin je wraper, ktorý zobrazuje stánku v kodi v upravenej forme
+ 
+![Snímka obrazovky_2024-04-30_16-25-51](https://github.com/jastrab/plugin.video.rtvs.sk/assets/6190406/43243367-dc64-4c33-97ce-d0069054df33)
 
 Plugin umožňuje:
 - prehrávanie živého vysielania televýznych rtvs staníc
