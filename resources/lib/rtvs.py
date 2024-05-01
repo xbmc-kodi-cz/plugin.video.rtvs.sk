@@ -53,9 +53,9 @@ END_AZ_RADIO = '<div class=\"box box--live\">'
 AZ_ITER_RE_RADIO = 'title=\"(?P<title>[^\"]+)\" href=\"(?P<url>[^\"]+)\".+?__station">(?P<station>[^\t]+).+?__series">(?P<series>[^<]+).+?__date">(?P<date>[^<]+)'
 
 START_DATE = '<div class=\"row tv__archive tv__archive--date\">'
-END_DATE = END_AZ
+END_DATE = '<!-- FOOTER -->'
 # DATE_ITER_RE = '<div class=\"media\">\s*<a href=\"(?P<url>[^\"]+)\".+?<img src=\"(?P<img>[^\"]+)\".+?<\/a>\s*<div class=\"media__body\">.+?<div class=\"program time--start\">(?P<time>[^\<]+)<span>.+?<a class=\"link\".+?title=\"(?P<title>[^\"]+)\">.+?<p class=\"perex\">(?P<plot>[^<]+)<\/p>'
-DATE_ITER_RE = r'<div class=\"media.*?<a href=\"(?P<url>[^\"]+)\".+?<img src=\"(?P<img>[^\"]+)\".+?<\/a>.*?<div class=\"media__body\">.+?<div class=\"program time--start\">(?P<time>[^\<]+)<span>.+?<a class=\"link\".+?title=\"(?P<title>[^\"]+)\">.+?<p class=\"perex\">'
+DATE_ITER_RE = '<div class=\"media.+?\">\s*<a href=\"(?P<url>[^\"]+)\".+?<img src=\"(?P<img>[^\"]+)\".+?<\/a>\s*<div class=\"media__body\">.+?<div class=\"program time--start\">(?P<time>[^\<]+)<span>.+?<a class=\"link\".+?title=\"(?P<title>[^\"]+)\">'
 
 START_DATE_RADIO = '<li class=\"list--radio-series__list list__headers\">'
 END_DATE_RADIO = '<div class=\"box box--live\">'
@@ -523,8 +523,7 @@ class RtvsContentProvider(ContentProvider):
             item['title'] = "%s (%s)" % (m.group('title'), m.group('time'))
             item['img'] = self._fix_url(m.group('img'))
             item['url'] = m.group('url')
-            if 'plot' in m.groups():
-                item['plot'] = m.group('plot')
+            # item['plot'] = m.group('plot')
             item['menu'] = {'$30070':{'list':item['url'], 'action-type':'list'}}
             # self.info(item)
             self._filter(result, item)
