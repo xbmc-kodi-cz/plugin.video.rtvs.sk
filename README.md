@@ -1,5 +1,5 @@
 Kodi plugin pre prehrávanie RTVS - rtvs.sk
-- jednoduhé a prehľadné prehrávanie archívu z rtvs v kodi
+- jednoduhé a prehľadné prehrávanie archívu a živého vysielania
  
 ![Snímka obrazovky_2024-04-30_16-25-51](https://github.com/jastrab/plugin.video.rtvs.sk/assets/6190406/43243367-dc64-4c33-97ce-d0069054df33)
 
@@ -36,7 +36,6 @@ Archív relácie podľa dátumu:
 
 ![Snímka obrazovky_2024-04-30_16-04-06](https://github.com/jastrab/plugin.video.rtvs.sk/assets/6190406/b05c5fef-4fdd-4d8e-ba61-5a3c4856b4f0)
 
-
 Video info:
 
 ![Snímka obrazovky_2024-04-30_16-04-41](https://github.com/jastrab/plugin.video.rtvs.sk/assets/6190406/b194b0ef-d2cc-48ee-b14c-edf413232deb)
@@ -46,6 +45,10 @@ Video:
 ![Snímka obrazovky_2024-04-30_16-05-37](https://github.com/jastrab/plugin.video.rtvs.sk/assets/6190406/28cb0758-8d9c-4143-9a8e-2283e7316a7f)
 
 _Changelog by jastrab:_ 
+
+**1.9.9:**
+- add readme.md
+- upd code
 
 **1.9.8:**
 - fix video archive Date
