@@ -46,51 +46,49 @@ import xbmc, xbmcaddon, xbmcgui
 
 START_AZ = '<div class=\"row tv__archive tv__archive--list\">'
 END_AZ = '<div class="footer'
-AZ_ITER_RE = '<a title=\"(?P<title>[^"]+)\"(.+?)href=\"(?P<url>[^"]+)\"(.+?)<img src=\"(?P<img>[^"]+)\"(.+?)<span class=\"date\">(?P<date>[^<]+)<\/span>(.+?)<span class=\"program time--start\">(?P<time>[^<]+)'
+AZ_ITER_RE = r'<a title=\"(?P<title>[^"]+)\"(.+?)href=\"(?P<url>[^"]+)\"(.+?)<img src=\"(?P<img>[^"]+)\"(.+?)<span class=\"date\">(?P<date>[^<]+)<\/span>(.+?)<span class=\"program time--start\">(?P<time>[^<]+)'
 
 START_AZ_RADIO = '<li class=\"list--radio-series__list list__headers\">'
 END_AZ_RADIO = '<div class=\"box box--live\">'
-AZ_ITER_RE_RADIO = 'title=\"(?P<title>[^\"]+)\" href=\"(?P<url>[^\"]+)\".+?__station">(?P<station>[^\t]+).+?__series">(?P<series>[^<]+).+?__date">(?P<date>[^<]+)'
+AZ_ITER_RE_RADIO = r'title=\"(?P<title>[^\"]+)\" href=\"(?P<url>[^\"]+)\".+?__station">(?P<station>[^\t]+).+?__series">(?P<series>[^<]+).+?__date">(?P<date>[^<]+)'
 
 START_DATE = '<div class=\"row tv__archive tv__archive--date\">'
 END_DATE = '<!-- FOOTER -->'
-# DATE_ITER_RE = '<div class=\"media\">\s*<a href=\"(?P<url>[^\"]+)\".+?<img src=\"(?P<img>[^\"]+)\".+?<\/a>\s*<div class=\"media__body\">.+?<div class=\"program time--start\">(?P<time>[^\<]+)<span>.+?<a class=\"link\".+?title=\"(?P<title>[^\"]+)\">.+?<p class=\"perex\">(?P<plot>[^<]+)<\/p>'
-DATE_ITER_RE = '<div class=\"media.+?\">\s*<a href=\"(?P<url>[^\"]+)\".+?<img src=\"(?P<img>[^\"]+)\".+?<\/a>\s*<div class=\"media__body\">.+?<div class=\"program time--start\">(?P<time>[^\<]+)<span>.+?<a class=\"link\".+?title=\"(?P<title>[^\"]+)\">'
+DATE_ITER_RE = r'<div class=\"media.+?\">\s*<a href=\"(?P<url>[^\"]+)\".+?<img src=\"(?P<img>[^\"]+)\".+?<\/a>\s*<div class=\"media__body\">.+?<div class=\"program time--start\">(?P<time>[^\<]+)<span>.+?<a class=\"link\".+?title=\"(?P<title>[^\"]+)\">'
 
 START_DATE_RADIO = '<li class=\"list--radio-series__list list__headers\">'
 END_DATE_RADIO = '<div class=\"box box--live\">'
-DATE_ITER_RE_RADIO = 'title=\"(?P<title>[^\"]+)\" href=\"(?P<url>[^\"]+)\".+?__station">(?P<station>[^\t]+).+?__series">(?P<series>[^<]+).+?__date">(?P<date>[^<]+)'
+DATE_ITER_RE_RADIO = r'title=\"(?P<title>[^\"]+)\" href=\"(?P<url>[^\"]+)\".+?__station">(?P<station>[^\t]+).+?__series">(?P<series>[^<]+).+?__date">(?P<date>[^<]+)'
 
 
 RADIO_STATION_START = '<div class=\"box box--live\">'
 RADIO_STATION_END = '<!-- FOOTER -->'
-RADIO_STATION_ITER_RE = 'href=\"(?P<url>[^\"]+)\".+?title=\"(?P<title>[^\"]+)'
+RADIO_STATION_ITER_RE = r'href=\"(?P<url>[^\"]+)\".+?title=\"(?P<title>[^\"]+)'
 
 RADIO_EXTRA_START = '<ul class=\"router--archive-extra\">'
 RADIO_EXTRA_END = '<!-- ROZHLASOVE STANICE-->'
-RADIO_EXTRA_ITER_RE = 'title=\"(?P<title>[^\"]+).*?href=\"(?P<url>[^\"]+)\".+?subtitle\">(?P<subtitle>[^<]+|)'
+RADIO_EXTRA_ITER_RE = r'title=\"(?P<title>[^\"]+).*?href=\"(?P<url>[^\"]+)\".+?subtitle\">(?P<subtitle>[^<]+|)'
 
 RADIO_PLUS_START = '<table width=\"100%\">'
 RADIO_PLUS_END = '</table>'
-# RADIO_PLUS_ITER_RE = '<a class="a210_page a210_page" title="(?P<title>[^\"]+)" href="(?P<url>[^\"]+).*?src="(?P<img>[^\"]+).*?<br \/>\((?P<popis>[^)]+)'
-# RADIO_PLUS_ITER_RE = '<a class=\"a210_page a210_page\" title=\"(?P<title>[^\"]+)\" href=\"(?P<url>[^\"]+).*?src=\"(?P<img>[^\"]+)\"'
-RADIO_PLUS_ITER_RE = 'src=\"(?P<img>[^\"]+)\".*?<a class=\"a210_page a210_page\" title=\"(?P<title>[^\"]+)\" href=\"(?P<url>[^\"]+)\".*?(?:<br \/>|<\/b>)\((?P<popis>[^\)]+)\)'
+RADIO_PLUS_ITER_RE = r'src=\"(?P<img>[^\"]+)\".*?<a class=\"a210_page a210_page\" title=\"(?P<title>[^\"]+)\" href=\"(?P<url>[^\"]+)\".*?(?:<br \/>|<\/b>)\((?P<popis>[^\)]+)\)'
 
 RADIO_PLUS_START_CAST = '<div class=\"col-12 col-md-8 article__body\">'
 RADIO_PLUS_END_CAST = '<!-- ROZHLASOVE STANICE-->'
-RADIO_PLUS_ITER_RE_CAST = '<strong class="player-title">(?P<title>[^\<]+)<\/strong>.*?loading="lazy" src="(?P<url>[^\"]+)'
+RADIO_PLUS_ITER_RE_CAST = r'<strong class="player-title">(?P<title>[^\<]+)<\/strong>.*?loading="lazy" src="(?P<url>[^\"]+)'
 
 
-START_LISTING = "<div class='calendar modal-body'>"
+START_LISTING = '<div class=\'calendar modal-body´\'>'
 END_LISTING = '</table>'
-LISTING_PAGER_RE = "<a class=\'prev calendarRoller' href=\'(?P<prevurl>[^\']+)\'.+?<a class=\'next calendarRoller\' href=\'(?P<nexturl>[^\']+)"
-LISTING_DATE_RE = '<div class=\'calendar-header\'>\s+.*?<h6>(?P<date>[^<]+)</h6>'
-LISTING_ITER_RE = '<td class=(\"day\"|\"active day\")>\s+<a href=[\'\"](?P<url>[^\"^\']+)[\"\']>(?P<daynum>[\d]+)</a>\s+</td>'
+LISTING_PAGER_RE = '<a class=\'prev calendarRoller\' href=\'(?P<prevurl>[^\']+)\'.+?<a class=\'next calendarRoller\' href=\'(?P<nexturl>[^\']+)'
+LISTING_DATE_RE = r'<div class=\'calendar-header\'>\s+.*?<h6>(?P<date>[^<]+)</h6>'
+LISTING_ITER_RE = r'<td class=(\"day\"|\"active day\")>\s+<a href=[\'\"](?P<url>[^\"^\']+)[\"\']>(?P<daynum>[\d]+)</a>\s+</td>'
 
-EPISODE_RE = '<div class=\"article-header\">\s+?<h2>(?P<title>[^<]+)</h2>.+?(<div class=\"span6">\s+?<div[^>]+?>(?P<plot>[^<]+)</div>)?'
+EPISODE_RE = r'<div class=\"article-header\">\s+?<h2>(?P<title>[^<]+)</h2>.+?(<div class=\"span6">\s+?<div[^>]+?>(?P<plot>[^<]+)</div>)?'
 
 COLOR_START = '[COLOR FFB2D4F5]'
 COLOR_END = '[/COLOR]'
+
 def to_unicode(text, encoding='utf-8'):
     return text
 
@@ -523,7 +521,8 @@ class RtvsContentProvider(ContentProvider):
             item['title'] = "%s (%s)" % (m.group('title'), m.group('time'))
             item['img'] = self._fix_url(m.group('img'))
             item['url'] = m.group('url')
-            # item['plot'] = m.group('plot')
+            if 'plot' in m.groups():
+                item['plot'] = m.group('plot')
             item['menu'] = {'$30070':{'list':item['url'], 'action-type':'list'}}
             # self.info(item)
             self._filter(result, item)

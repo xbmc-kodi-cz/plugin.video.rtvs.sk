@@ -1,3 +1,6 @@
+[B]1.9.9:[/B]
+- add readme.md
+- upd code
 [B]1.9.8:[/B]
 - fix video archive Date
 [B]1.9.7:[/B]
