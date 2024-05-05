@@ -1,3 +1,5 @@
+[B]1.9.10:[/B]
+- fix calendar in A-Z tv archive
 [B]1.9.9:[/B]
 - add readme.md
 - upd code
