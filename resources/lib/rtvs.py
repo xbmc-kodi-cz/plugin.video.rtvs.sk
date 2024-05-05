@@ -78,7 +78,7 @@ RADIO_PLUS_END_CAST = '<!-- ROZHLASOVE STANICE-->'
 RADIO_PLUS_ITER_RE_CAST = r'<strong class="player-title">(?P<title>[^\<]+)<\/strong>.*?loading="lazy" src="(?P<url>[^\"]+)'
 
 
-START_LISTING = '<div class=\'calendar modal-body´\'>'
+START_LISTING = '<div class=\'calendar modal-body\'>'
 END_LISTING = '</table>'
 LISTING_PAGER_RE = '<a class=\'prev calendarRoller\' href=\'(?P<prevurl>[^\']+)\'.+?<a class=\'next calendarRoller\' href=\'(?P<nexturl>[^\']+)'
 LISTING_DATE_RE = r'<div class=\'calendar-header\'>\s+.*?<h6>(?P<date>[^<]+)</h6>'
