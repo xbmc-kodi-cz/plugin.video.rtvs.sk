@@ -16,6 +16,13 @@ Plugin umožňuje:
 
 podľa dátumu - dátumy sú vždy po mesiaci, preto sa treba preklikať k danému dátumu a nie sú naraz zobrazené (podobne ako na webe)
 
+
+Ak niečo nefunguje treba si to overiť na webe stvr.sk:
+- niektoré videá skončia s hláškou "Je nám ľúto, ale toto video už nie je k dispozícii z licenčných dôvodov."
+- niektoré relácie v rádiu nemajú zvukový záznam resp. majú iba text.
+
+---
+
 RTVS ponuka:
 
 ![Snímka obrazovky_2024-04-30_16-02-12](https://github.com/jastrab/plugin.video.rtvs.sk/assets/6190406/9cb52e8d-b963-4d7e-a74a-ee2d49b020b0)
@@ -45,6 +52,16 @@ Video:
 ![Snímka obrazovky_2024-04-30_16-05-37](https://github.com/jastrab/plugin.video.rtvs.sk/assets/6190406/28cb0758-8d9c-4143-9a8e-2283e7316a7f)
 
 _Changelog by jastrab:_ 
+
+**1.9.11:**
+- upd hostname
+- fix urls
+- fix tv 24 live name
+- fix radio archive A-Z
+- fix radio extra archive vzdelavanie
+
+**1.9.10:**
+- fix calendar in A-Z tv archive
 
 **1.9.9:**
 - add readme.md
