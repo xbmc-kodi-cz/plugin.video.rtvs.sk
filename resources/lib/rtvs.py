@@ -44,13 +44,17 @@ from provider import ContentProvider
 import json
 import xbmc, xbmcaddon, xbmcgui
 
+DOMAIN = 'stvr.sk'
+HOST = 'https://www.' + DOMAIN
+IMAGES = ''
+
 START_AZ = '<div class=\"row tv__archive tv__archive--list\">'
 END_AZ = '<div class="footer'
 AZ_ITER_RE = r'<a title=\"(?P<title>[^"]+)\"(.+?)href=\"(?P<url>[^"]+)\"(.+?)<img src=\"(?P<img>[^"]+)\"(.+?)<span class=\"date\">(?P<date>[^<]+)<\/span>(.+?)<span class=\"program time--start\">(?P<time>[^<]+)'
 
 START_AZ_RADIO = '<li class=\"list--radio-series__list list__headers\">'
 END_AZ_RADIO = '<div class=\"box box--live\">'
-AZ_ITER_RE_RADIO = r'title=\"(?P<title>[^\"]+)\" href=\"(?P<url>[^\"]+)\".+?__station">(?P<station>[^\t]+).+?__series">(?P<series>[^<]+).+?__date">(?P<date>[^<]+)'
+AZ_ITER_RE_RADIO = r'title=\"(?P<title>[^\"]+)\" href=\"(?P<url>[^\"]+)\".+?__station[^"]+">(?P<station>[^\t]+).+?__series">(?P<series>[^<]+).+?__date">(?P<date>[^<]+)'
 
 START_DATE = '<div class=\"row tv__archive tv__archive--date\">'
 END_DATE = '<!-- FOOTER -->'
@@ -76,7 +80,15 @@ RADIO_PLUS_ITER_RE = r'src=\"(?P<img>[^\"]+)\".*?<a class=\"a210_page a210_page\
 RADIO_PLUS_START_CAST = '<div class=\"col-12 col-md-8 article__body\">'
 RADIO_PLUS_END_CAST = '<!-- ROZHLASOVE STANICE-->'
 RADIO_PLUS_ITER_RE_CAST = r'<strong class="player-title">(?P<title>[^\<]+)<\/strong>.*?loading="lazy" src="(?P<url>[^\"]+)'
+RADIO_PLUS_ITER_RE_CAST2 = r'title="(?P<title0>[^"]+)" href="(?P<url>[^"]+)".*?>(?P<title>[^<]+)<'
 
+
+RADIO_PLUS_START_CAST2 = '<!-- LAVA STRANA -->'
+RADIO_PLUS_ITER_RE_CAST22 = r'<picture>.*?source srcset="(?P<img>[^"]+)".*?article__body">(?P<desc>.*?)<\/p>'
+
+RADIO_PLUS_START_CAST3 = '<!-- CONTENT -->'
+RADIO_PLUS_END_CAST3 = '<!-- ROZHLASOVE STANICE-->'
+RADIO_PLUS_ITER_RE_CAST3 = r'<picture>.*?source srcset="(?P<img>[^"]+)".*?article__body">(?P<desc>.*?)<strong class="player-title">(?P<title>[^\<]+)<\/strong>.*?loading="lazy" src="(?P<url>[^\"]+)'
 
 START_LISTING = '<div class=\'calendar modal-body\'>'
 END_LISTING = '</table>'
@@ -129,29 +141,35 @@ def _fix_space(text):
     text = re.sub('^[ \t\r\n]{1,}|[ \t\r\n]{1,}$', '', text)
     return text
 
+def _fix_chars(text):
+    text = re.sub('<br ?/>|<br ?>', '\n', text)
+    text = re.sub('<.*?>', '', text)
+    return text
+
 class RtvsContentProvider(ContentProvider):
 
     def __init__(self, username=None, password=None, filter=None, tmp_dir='/tmp'):
-        ContentProvider.__init__(self, 'rtvs.sk', 'http://www.rtvs.sk/televizia/archiv', username, password, filter, tmp_dir)
+        ContentProvider.__init__(self, DOMAIN, f'{HOST}/televizia/archiv', username, password, filter, tmp_dir)
         opener = urllib2.build_opener(urllib2.HTTPCookieProcessor(cookielib.LWPCookieJar()))
         urllib2.install_opener(opener)
 
     def _fix_url(self, url):
         if url.startswith('/json/') or url.startswith('/televizia/archiv/'):
-            return 'http://www.rtvs.sk' + url
+            return HOST + url
         return self._url(url)
 
     def _fix_url_radio(self, url):
         # self.info('_fix_url_radio url=' + url)
         if url.startswith('/json/') or url.startswith('/radio/archiv/'):
-            return 'http://www.rtvs.sk' + url
+            return HOST + url
         return self._url(url)
 
     def _get_url(self, radio=False):
-        url = 'http://www.rtvs.sk/televizia/archiv'
+        url = f'{HOST}/televizia/archiv'
         if radio:
-            url = 'http://www.rtvs.sk/radio/archiv'
+            url = f'{HOST}/radio/archiv'
         # self.info('_get_url url=' + url)
+        # url = HOST + (radio and 'radio' or 'televizia') + '/archiv'
         return url
 
     def capabilities(self):
@@ -188,6 +206,11 @@ class RtvsContentProvider(ContentProvider):
         elif url.find("?radio=plus") != -1:
             self.base_url = self._get_url(True)
             return self.get_radio_archiv_plus_cast(url)
+
+        elif url.find("?radio=vzdelanie_plus") != -1:
+            self.base_url = self._get_url(True)
+            return self.get_radio_archiv_plus_cast2(url)
+
 
         elif url.find("#extra_radio#") == 0:
             self.base_url = self._get_url(True)
@@ -270,7 +293,7 @@ class RtvsContentProvider(ContentProvider):
 
     def getInfoFromWeb(self, item):
         channel_id = item['url'].split('.')[1]
-        data = util.request("http://www.rtvs.sk/json/live5f.json?c=%s&b=mozilla&p=linux&v=47&f=1&d=1"%(channel_id))
+        data = util.request(HOST + "/json/live5f.json?c=%s&b=mozilla&p=linux&v=47&f=1&d=1"%(channel_id))
         videodata = util.json.loads(data)['clip']
         url = videodata['sources'][0]['src']
         url = ''.join(url.split())
@@ -285,12 +308,13 @@ class RtvsContentProvider(ContentProvider):
     def get_list_radios(self):
         result = []
         # self.info ('== get_list_radios ==')
-        page = util.request('http://www.rtvs.sk/radio/radia')
+        page = util.request(f'{HOST}/radio/radia')
         page = util.substr(page, RADIO_STATION_START, RADIO_STATION_END)
         for m in re.finditer(RADIO_STATION_ITER_RE, page, re.IGNORECASE | re.DOTALL):
             item = self.video_item()
             item['title'] = m.group('title')
             item['url'] = m.group('url')
+            # item['img'] = IMAGES + "rtvs_24.png"
             item['menu'] = {'$30070':{'list':item['url'], 'action-type':'list'}}
             # self.info(item)
             self._filter(result, item)
@@ -300,14 +324,14 @@ class RtvsContentProvider(ContentProvider):
         result = []
         # self.info ('== get_radio_archiv_extra ==')
         # self.info(page)
-        page = util.request('http://www.rtvs.sk/radio/archiv/extra')
+        page = util.request(f'{HOST}/radio/archiv/extra')
         page = util.substr(page, RADIO_EXTRA_START, RADIO_EXTRA_END)
         # self.info(page)
         for m in re.finditer(RADIO_EXTRA_ITER_RE, page, re.IGNORECASE | re.DOTALL):
             # item = self.video_item()
             item = self.dir_item()  
             item['title'] = m.group('title')
-            item['url'] = 'http://www.rtvs.sk' + m.group('url')
+            item['url'] = HOST + m.group('url')
             item['plot'] = m.group('subtitle')
             item['menu'] = {'$30070':{'list':item['url'], 'action-type':'list'}}
             # self.info(item)
@@ -318,14 +342,14 @@ class RtvsContentProvider(ContentProvider):
         result = []
         # self.info ('== get_radio_archiv_plus ==')
         # self.info(page)
-        page = util.request('http://www.rtvs.sk/radio/archiv-plus')
+        page = util.request(f'{HOST}/radio/archiv-plus')
         page = util.substr(page, RADIO_PLUS_START, RADIO_PLUS_END)
         # self.info(page)
         for m in re.finditer(RADIO_PLUS_ITER_RE, page, re.IGNORECASE | re.DOTALL):
             # item = self.video_item()
             item = self.dir_item()  
             item['title'] = m.group('title')
-            item['url'] = 'http://www.rtvs.sk' + m.group('url') + '?radio=plus'
+            item['url'] = HOST + m.group('url') + '?radio=plus'
             item['plot'] = m.group('popis')
             item['img'] = m.group('img')
             item['menu'] = {'$30070':{'list':item['url'], 'action-type':'list'}}
@@ -336,23 +360,54 @@ class RtvsContentProvider(ContentProvider):
     def get_radio_archiv_plus_cast(self, url):
         result = []
         # self.info ('== get_radio_archiv_plus_cast ==')
-        # self.info(page)
         page = util.request(url)
-        page = util.substr(page, RADIO_PLUS_START_CAST, RADIO_PLUS_END_CAST)
-        # self.info(page)
-        for m in re.finditer(RADIO_PLUS_ITER_RE_CAST, page, re.IGNORECASE | re.DOTALL):
+        page2 = util.substr(page, RADIO_PLUS_START_CAST, RADIO_PLUS_END_CAST)
+        if re.search(RADIO_PLUS_ITER_RE_CAST, page, re.IGNORECASE | re.DOTALL):
+            for m in re.finditer(RADIO_PLUS_ITER_RE_CAST, page2, re.IGNORECASE | re.DOTALL):
+                item = self.video_item()
+                item['title'] = _fix_space(m.group('title'))
+                item['url'] = m.group('url')                
+                self._filter(result, item)
+        else:
+            # for m in re.finditer(RADIO_PLUS_ITER_RE_CAST2, page, re.IGNORECASE | re.DOTALL):
+            #     item = self.dir_item()  
+            #     item['title'] = _fix_space(m.group('title'))
+            #     item['url'] = HOST + m.group('url')  + '?radio=vzdelanie_plus'
+            #     self._filter(result, item)
+            # page2 = util.substr(page, RADIO_PLUS_START_CAST2, RADIO_PLUS_END_CAST)
+
+            page3 = util.substr(page, RADIO_PLUS_START_CAST2, RADIO_PLUS_END_CAST3)
+            m = re.search(RADIO_PLUS_ITER_RE_CAST22, page3, re.IGNORECASE | re.DOTALL)
+            _desc = None
+            _img = None
+            if m:
+                _desc = _fix_chars(m.group('desc'))
+                _img = m.group('img')
+
+            for m in re.finditer(RADIO_PLUS_ITER_RE_CAST2, page2, re.IGNORECASE | re.DOTALL):
+                item = self.dir_item()  
+                if len(_fix_space(m.group('title'))) > len(m.group('title0')):
+                    item['title'] = _fix_space(m.group('title'))
+                else:
+                    item['title'] = _fix_space(m.group('title0'))
+
+                item['plot'] = _desc
+                item['img'] = _img
+                item['url'] = HOST + m.group('url')  + '?radio=vzdelanie_plus'
+                self.info(item)
+                self._filter(result, item)
+        return result
+
+    def get_radio_archiv_plus_cast2(self, url):
+        result = []
+        page = util.request(url)
+        page = util.substr(page, RADIO_PLUS_START_CAST3, RADIO_PLUS_END_CAST3)
+        for m in re.finditer(RADIO_PLUS_ITER_RE_CAST3, page, re.IGNORECASE | re.DOTALL):
             item = self.video_item()
-            # item = self.dir_item()  
             item['title'] = _fix_space(m.group('title'))
-            # url = m.group('url').split('/')[-1]
-
-            # item['url'] = 'http://www.rtvs.sk/json/audio5f.json?id=' + url
-
+            item['plot'] = _fix_chars(m.group('desc'))
+            item['img'] = m.group('img')
             item['url'] = m.group('url')
-            # item['plot'] = m.group('popis')
-            # item['img'] = m.group('img')
-            # item['menu'] = {'$30070':{'list':item['url'], 'action-type':'list'}}
-            # self.info(item)
             self._filter(result, item)
         return result
 
@@ -371,7 +426,8 @@ class RtvsContentProvider(ContentProvider):
         result.append(item)
 
         item = self.video_item("live.3")
-        item['title'] = "STV 3"
+        item['title'] = "STV 24"
+        # item['img'] = IMAGES + "rtvs_24.png"
         item = self.getInfoFromWeb(item)
         result.append(item)
 
@@ -390,10 +446,10 @@ class RtvsContentProvider(ContentProvider):
         item = self.getInfoFromWeb(item)
         result.append(item)
 
-        item = self.video_item("live.3")
-        item['title'] = "STV 3"
-        item = self.getInfoFromWeb(item)
-        result.append(item)
+        # item = self.video_item("live.3")
+        # item['title'] = "STV 3"
+        # item = self.getInfoFromWeb(item)
+        # result.append(item)
 
         result += self.get_list_radios()
         
@@ -560,7 +616,7 @@ class RtvsContentProvider(ContentProvider):
             # self.info('prev_url = ' + prev_url)
             item = self.dir_item()
             item['type'] = 'next'
-            item['url'] = 'http://www.rtvs.sk' + prev_url
+            item['url'] = HOST + prev_url
             result.append(item)
         return result
 
@@ -614,7 +670,7 @@ class RtvsContentProvider(ContentProvider):
         item = item.copy()
         if item['url'].startswith('live.'):
             channel_id = item['url'].split('.')[1]
-            data = util.request("http://www.rtvs.sk/json/live5f.json?c=%s&b=mozilla&p=linux&v=47&f=1&d=1"%(channel_id))
+            data = util.request(f"{HOST}/json/live5f.json?c=%s&b=mozilla&p=linux&v=47&f=1&d=1"%(channel_id))
             videodata = util.json.loads(data)['clip']
             url = videodata['sources'][0]['src']
             url = ''.join(url.split()) # remove whitespace \n from URL
@@ -648,7 +704,7 @@ class RtvsContentProvider(ContentProvider):
         elif item['url'].find('/embed/audio/') != -1:
                 audio_id = item['url'].split('/')[-1]
                 # item['url'] = 'http://www.rtvs.sk/json/audio5f.json?id=' + url
-                audiodata = util.json.loads(util.request("http://www.rtvs.sk/json/audio5f.json?id=" + audio_id))
+                audiodata = util.json.loads(util.request(f"{HOST}/json/audio5f.json?id=" + audio_id))
                 for v in audiodata['playlist'][0]['sources']:
                     url =  v['src']
                     if '.mp3' in url:                    
@@ -663,9 +719,9 @@ class RtvsContentProvider(ContentProvider):
             audio_id = item['url'].split('/')[-1]
             audio_id0 = item['url'].split('/')[-2]
             self.info("<resolve> audioid: %s" % audio_id)
-            embed_data = util.request("http://www.rtvs.sk/embed/radio/archive/%s/%s"%(audio_id0, audio_id))
+            embed_data = util.request(f"{HOST}/embed/radio/archive/%s/%s"%(audio_id0, audio_id))
             audio_id = re.search('audio5f\.json\?id=(?P<id>[^\"]+)', embed_data, re.IGNORECASE | re.DOTALL).group('id')
-            audiodata = util.json.loads(util.request("http://www.rtvs.sk/json/audio5f.json?id=" + audio_id))
+            audiodata = util.json.loads(util.request(f"{HOST}/json/audio5f.json?id=" + audio_id))
             for v in audiodata['playlist'][0]['sources']:
                 url =  v['src']
                 if '.mp3' in url:                    
@@ -678,7 +734,7 @@ class RtvsContentProvider(ContentProvider):
         else:
             video_id = item['url'].split('/')[-1]
             self.info("<resolve> videoid: %s" % video_id)
-            videodata = util.json.loads(util.request("https://www.rtvs.sk/json/archive5f.json?id=" + video_id))
+            videodata = util.json.loads(util.request(f"{HOST}/json/archive5f.json?id=" + video_id))
             for v in videodata['clip']['sources']:
                 url =  v['src']
                 if '.m3u8' in url:

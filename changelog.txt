@@ -1,3 +1,9 @@
+[B]1.9.11:[/B]
+- upd hostname
+- fix urls
+- fix tv 24 live name
+- fix radio archive A-Z
+- fix radio extra archive vzdelavanie
 [B]1.9.10:[/B]
 - fix calendar in A-Z tv archive
 [B]1.9.9:[/B]
