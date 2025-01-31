@@ -685,8 +685,12 @@ class RtvsContentProvider(ContentProvider):
 
         elif item['url'].find('/player/') != -1:
             #channel_id = item['url'].split('.')[1]
-            data = util.request('http:' + item['url'])
-
+            if '/' == item['url'][-1]:
+                _url = item['url'][:-1]
+            else:
+                _url = item['url']
+            _url = _url.replace('.rtvs', '.stvr')
+            data = util.request('https:' + _url)
             url = re.search('src: "(?P<url>[^\"]+)', data, re.IGNORECASE | re.DOTALL).group('url')
 
             # videodata = util.json.loads(data)['clip']
