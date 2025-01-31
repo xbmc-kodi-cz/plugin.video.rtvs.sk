@@ -53,6 +53,9 @@ Video:
 
 _Changelog by jastrab:_ 
 
+**1.9.12:**
+- fix radio live
+
 **1.9.11:**
 - upd hostname
 - fix urls
