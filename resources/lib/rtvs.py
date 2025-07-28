@@ -446,6 +446,11 @@ class RtvsContentProvider(ContentProvider):
         item = self.getInfoFromWeb(item)
         result.append(item)
 
+        item = self.video_item("live.6")
+        item['title'] = "LIVE STVR"
+        item = self.getInfoFromWeb(item)
+        result.append(item)
+
         # item = self.video_item("live.3")
         # item['title'] = "STV 3"
         # item = self.getInfoFromWeb(item)
