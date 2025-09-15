@@ -94,9 +94,9 @@ START_LISTING = '<div class=\'calendar modal-body\'>'
 END_LISTING = '</table>'
 LISTING_PAGER_RE = '<a class=\'prev calendarRoller\' href=\'(?P<prevurl>[^\']+)\'.+?<a class=\'next calendarRoller\' href=\'(?P<nexturl>[^\']+)'
 LISTING_DATE_RE = r'<div class=\'calendar-header\'>\s+.*?<h6>(?P<date>[^<]+)</h6>'
-LISTING_ITER_RE = r'<td class=(\"day\"|\"active day\")>\s+<a href=[\'\"](?P<url>[^\"^\']+)[\"\']>(?P<daynum>[\d]+)</a>\s+</td>'
+LISTING_ITER_RE = r'<td class=(\"day\"|\"active day\")>\s+<a href=[\'\"](?P<url>[^\"^\']+)[\"\'].*?>(?P<daynum>[\d]+)</a>\s+</td>'
 
-EPISODE_RE = r'<div class=\"article-header\">\s+?<h2>(?P<title>[^<]+)</h2>.+?(<div class=\"span6">\s+?<div[^>]+?>(?P<plot>[^<]+)</div>)?'
+EPISODE_RE = r'<div class="article__header">.?<h2 class="page__title">(?P<title>[^<]+)</h2>.?<div class="article__date-name(?: article__date-name--valid)?">.*?(?P<plot>\d{1,2}.\d{1,2}.\d{4})'
 
 COLOR_START = '[COLOR FFB2D4F5]'
 COLOR_END = '[/COLOR]'
