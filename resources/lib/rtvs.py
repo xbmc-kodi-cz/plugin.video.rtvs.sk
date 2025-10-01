@@ -48,7 +48,7 @@ DOMAIN = 'stvr.sk'
 HOST = 'https://www.' + DOMAIN
 IMAGES = ''
 
-START_AZ = '<div class=\"row tv__archive tv__archive--list\">'
+START_AZ = '<div class=\"row tv__archive\">'
 END_AZ = '<div class="footer'
 AZ_ITER_RE = r'<a title=\"(?P<title>[^"]+)\"(.+?)href=\"(?P<url>[^"]+)\"(.+?)<img src=\"(?P<img>[^"]+)\"(.+?)<span class=\"date\">(?P<date>[^<]+)<\/span>(.+?)<span class=\"program time--start\">(?P<time>[^<]+)'
 
@@ -56,7 +56,7 @@ START_AZ_RADIO = '<li class=\"list--radio-series__list list__headers\">'
 END_AZ_RADIO = '<div class=\"box box--live\">'
 AZ_ITER_RE_RADIO = r'title=\"(?P<title>[^\"]+)\" href=\"(?P<url>[^\"]+)\".+?__station[^"]+">(?P<station>[^\t]+).+?__series">(?P<series>[^<]+).+?__date">(?P<date>[^<]+)'
 
-START_DATE = '<div class=\"row tv__archive tv__archive--date\">'
+START_DATE = 'class=\"row tv__archive tv__archive--date\">'
 END_DATE = '<!-- FOOTER -->'
 DATE_ITER_RE = r'<div class=\"media.+?\">\s*<a href=\"(?P<url>[^\"]+)\".+?<img src=\"(?P<img>[^\"]+)\".+?<\/a>\s*<div class=\"media__body\">.+?<div class=\"program time--start\">(?P<time>[^\<]+)<span>.+?<a class=\"link\".+?title=\"(?P<title>[^\"]+)\">'
 
@@ -96,7 +96,7 @@ LISTING_PAGER_RE = '<a class=\'prev calendarRoller\' href=\'(?P<prevurl>[^\']+)\
 LISTING_DATE_RE = r'<div class=\'calendar-header\'>\s+.*?<h6>(?P<date>[^<]+)</h6>'
 LISTING_ITER_RE = r'<td class=(\"day\"|\"active day\")>\s+<a href=[\'\"](?P<url>[^\"^\']+)[\"\'].*?>(?P<daynum>[\d]+)</a>\s+</td>'
 
-EPISODE_RE = r'<div class=\"article__header\">.*?<h2 class=\"page__title\">(?P<title>[^<]+)</h2>.*?<div class=\"article__date-name(?: article__date-name--valid)?\">.*?(?P<plot>\d{1,2}.\d{1,2}.\d{4})'
+EPISODE_RE = r'<div class="article__header">.?<h2 class="page__title">(?P<title>[^<]+)</h2>.?<div class="article__date-name(?: article__date-name--valid)?">.*?(?P<plot>\d{1,2}.\d{1,2}.\d{4})'
 
 COLOR_START = '[COLOR FFB2D4F5]'
 COLOR_END = '[/COLOR]'
@@ -148,6 +148,8 @@ def _fix_chars(text):
 
 class RtvsContentProvider(ContentProvider):
 
+    data_json = None
+
     def __init__(self, username=None, password=None, filter=None, tmp_dir='/tmp'):
         ContentProvider.__init__(self, DOMAIN, f'{HOST}/televizia/archiv', username, password, filter, tmp_dir)
         opener = urllib2.build_opener(urllib2.HTTPCookieProcessor(cookielib.LWPCookieJar()))
@@ -168,17 +170,15 @@ class RtvsContentProvider(ContentProvider):
         url = f'{HOST}/televizia/archiv'
         if radio:
             url = f'{HOST}/radio/archiv'
-        # self.info('_get_url url=' + url)
-        # url = HOST + (radio and 'radio' or 'televizia') + '/archiv'
         return url
 
     def capabilities(self):
         return ['categories', 'resolve', '!download']
 
     def list(self, url):
-        # self.info('== list ==')
-        # self.info('url=' + url )
-        # self.info('base_url=' + self.base_url)
+        self.info('== list ==')
+        self.info('url=' + url )
+        self.info('base_url=' + self.base_url)
 
         if url.find('#az#') == 0:
             return self.az()
@@ -189,15 +189,18 @@ class RtvsContentProvider(ContentProvider):
         elif url.find('#live#') == 0:
             return self.live()
 
+        elif url.find("#date_radio#") == 0 or (url.find("radio=1") != -1 and url.find('ord=dt') == -1):
+            d = re.search('#date(?:_radio|)#(?P<month>[\d]{1,2})\.(?P<year>[\d]{4})', url)
+            month = d.group('month')
+            year = d.group('year')
+            self.base_url = self._get_url(True)
+            return self.date_radio(int(year), int(month))
+
         elif url.find("#date#") == 0:
             month, year = url.split('#')[-1].split('.')
             self.base_url = self._get_url()
             return self.date(int(year), int(month))
         
-        elif url.find("#date_radio#") == 0:
-            month, year = url.split('#')[-1].split('.')
-            self.base_url = self._get_url(True)
-            return self.date_radio(int(year), int(month))
 
         elif url.find("/archiv/extra/vzdelavanie") != -1:
             self.base_url = self._get_url(True)
@@ -223,7 +226,7 @@ class RtvsContentProvider(ContentProvider):
             else:
                 self.base_url = self._get_url(True)
                 return self.list_az_radio(util.request(self._fix_url_radio(url)))
-        
+            
         elif url.find('/archiv/extra/') != -1:
             self.base_url = self._get_url(True)
             return self.list_date_radio(util.request(self._fix_url_radio(url)))
@@ -239,8 +242,10 @@ class RtvsContentProvider(ContentProvider):
         elif url.find('/json/') != -1:
             if url.find('snippet_archive_series_calendar.json'):
                 if url.find('/radio/') == -1:
+                    self.info('==radio=>')
                     return self.list_episodes(util.json.loads(util.request(self._fix_url(url)))['snippets']['snippet-calendar-calendar'])
                 else:
+                    self.info('==no radio=>')
                     self.base_url = self._get_url(True)
                     return self.list_episodes(util.json.loads(util.request(self._fix_url_radio(url)))['snippets']['snippet-calendar-calendar'])
 
@@ -249,10 +254,30 @@ class RtvsContentProvider(ContentProvider):
         else:
             self.info("EPISODE listing: %s" % url)
             if url.find('/radio/') == -1:
-                return self.list_episodes(util.request(self._fix_url(url)))
+                self.info('==radio 3 =>')
+                page = util.request(self._fix_url(url))
+                # data_json = self.data_web(page)
+                self.data_web(page)
+                return self.list_episodes(page)
+                # return self.list_episodes(util.request(self._fix_url(url)))
             else:
+                self.info('==radio 4 =>')
                 return self.list_episodes(util.request(self._fix_url_radio(url)))
 
+
+    def data_web(self, page):
+        data_json = None
+        fa = re.finditer(r'<script type="application\/ld\+json">(?P<data>.*?)<\/script>', page, re.IGNORECASE | re.DOTALL)
+        for f in fa:
+            self.info(f)
+            try:
+                data_json = json.loads(f['data'])
+                self.info(data_json)
+                if 'description' in data_json:
+                    break
+            except:
+                self.info('preskakujem')
+        return data_json
 
     def categories(self):
         result = []
@@ -369,13 +394,6 @@ class RtvsContentProvider(ContentProvider):
                 item['url'] = m.group('url')                
                 self._filter(result, item)
         else:
-            # for m in re.finditer(RADIO_PLUS_ITER_RE_CAST2, page, re.IGNORECASE | re.DOTALL):
-            #     item = self.dir_item()  
-            #     item['title'] = _fix_space(m.group('title'))
-            #     item['url'] = HOST + m.group('url')  + '?radio=vzdelanie_plus'
-            #     self._filter(result, item)
-            # page2 = util.substr(page, RADIO_PLUS_START_CAST2, RADIO_PLUS_END_CAST)
-
             page3 = util.substr(page, RADIO_PLUS_START_CAST2, RADIO_PLUS_END_CAST3)
             m = re.search(RADIO_PLUS_ITER_RE_CAST22, page3, re.IGNORECASE | re.DOTALL)
             _desc = None
@@ -573,7 +591,7 @@ class RtvsContentProvider(ContentProvider):
 
     def list_date(self, page):
         result = []
-        self.info ('== list_date ==')
+        # self.info ('== list_date ==')
         page = util.substr(page, START_DATE, END_DATE)
         page = re.sub('<p class=\"perex\"></p>', '<p class=\"perex\">&nbsp;</p>', page)
         # self.info(page)
@@ -592,18 +610,9 @@ class RtvsContentProvider(ContentProvider):
 
     def list_date_radio(self, page):
         result = []
-        self.info ('== list_date_radio ==')
+        # self.info ('== list_date_radio ==')
         # self.info(page)
         page2 = util.substr(page, '<li class=\"page-item active\">', '</nav>')
-        self.info(page2)
-        # if page2:
-        #     prev_url = re.search('page-item active">.+?href=\"(?P<url>\/[^\"]+)\".+?title=\"(?P<title>[^\"]+)\"', page, re.IGNORECASE | re.DOTALL).group('url')
-        #     # self.info('prev_url = ' + prev_url)
-        #     item = self.dir_item()
-        #     item['type'] = 'next'
-        #     item['url'] = 'http://www.rtvs.sk' + prev_url
-        #     result.append(item)
-        #item['url'] = "#date#%d.%d&radio=1" % (prev_month, prev_year)
         page = util.substr(page, START_DATE_RADIO, END_DATE_RADIO)
         for m in re.finditer(DATE_ITER_RE_RADIO, page, re.IGNORECASE | re.DOTALL):
             item = self.video_item()
@@ -613,7 +622,6 @@ class RtvsContentProvider(ContentProvider):
             item['url'] = m.group('url') #+ '?radio=1'
             item['plot'] = m.group('series')
             item['menu'] = {'$30070':{'list':item['url'], 'action-type':'list'}}
-            # self.info(item)
             self._filter(result, item)
         if page2:
             prev_url = re.search('page-item active">.+?href=\"(?P<url>\/[^\"]+)\".+?title=\"(?P<title>[^\"]+)\"', page, re.IGNORECASE | re.DOTALL).group('url')
@@ -629,6 +637,8 @@ class RtvsContentProvider(ContentProvider):
         result = []
         episodes = []
         # self.info ('== list_episodes ==')
+
+        data_json = None
         page = util.substr(page, START_LISTING, END_LISTING)
         current_date = to_unicode(re.search(LISTING_DATE_RE, page, re.IGNORECASE | re.DOTALL).group('date'))
         self.info("<list_episodes> current_date: %s" % current_date)
@@ -648,9 +658,19 @@ class RtvsContentProvider(ContentProvider):
             m = m[0]
             dnum = to_unicode(m.group('daynum'))
             item = self.list_episode(p)
-            item['title'] = "%s (%s. %s)" % (item['title'], dnum, current_date)
-            item['date'] = dnum
             item['url'] = re.sub('&amp;', '&', m.group('url'))
+            if not data_json:
+                data_json = self.data_web(util.request(self._fix_url(item['url'])))
+            
+            if data_json:
+                item['title'] = "%s (%s. %s)" % (item['title'] or data_json['name'], dnum, current_date)
+            else:
+                item['title'] = "%s (%s. %s)" % (item['title'], dnum, current_date)
+            item['date'] = dnum
+
+            if data_json:
+                item['img'] = data_json.get('thumbnailUrl', '')
+                item['plot'] = data_json.   get('description', '')
             self._filter(result, item)
         result.sort(key=lambda x:int(x['date']), reverse=True)
         item = self.dir_item()
@@ -670,8 +690,10 @@ class RtvsContentProvider(ContentProvider):
 
     def resolve(self, item, captcha_cb=None, select_cb=None):
         result = []
-        # self.info(' == resolve ==')
-        # self.info ( item )
+        self.info(' == resolve ==')
+        self.info ( item )
+
+        _item = item
         item = item.copy()
         if item['url'].startswith('live.'):
             channel_id = item['url'].split('.')[1]
@@ -685,11 +707,11 @@ class RtvsContentProvider(ContentProvider):
                 item['title'] = videodata.get('title','')
                 item['url'] = stream['url']
                 item['quality'] = stream['quality']
-                item['img'] = videodata.get('image','')
+                # item['img'] = videodata.get('image','')
+                item['img'] = videodata.get('image', _item.get('img', ''))
                 result.append(item)
 
         elif item['url'].find('/player/') != -1:
-            #channel_id = item['url'].split('.')[1]
             if '/' == item['url'][-1]:
                 _url = item['url'][:-1]
             else:
@@ -697,17 +719,8 @@ class RtvsContentProvider(ContentProvider):
             _url = _url.replace('.rtvs', '.stvr')
             data = util.request('https:' + _url)
             url = re.search('src: "(?P<url>[^\"]+)', data, re.IGNORECASE | re.DOTALL).group('url')
-
-            # videodata = util.json.loads(data)['clip']
-            # url = videodata['sources'][0]['src']
-            # url = ''.join(url.split()) # remove whitespace \n from URL
-            # #process m3u8 playlist
-            # for stream in get_streams_from_manifest_url(url):
-            #     item = self.video_item()
-            #item['title'] = videodata.get('title','')
             item['url'] = url
             item['type'] = 'audio/mp3'
-            #item['img'] = videodata.get('image','')
             result.append(item)
         
         elif item['url'].find('/embed/audio/') != -1:
