@@ -65,11 +65,11 @@ END_DATE_RADIO = '<div class=\"box box--live\">'
 DATE_ITER_RE_RADIO = r'title=\"(?P<title>[^\"]+)\" href=\"(?P<url>[^\"]+)\".+?__station">(?P<station>[^\t]+).+?__series">(?P<series>[^<]+).+?__date">(?P<date>[^<]+)'
 
 
-RADIO_STATION_START = '<div class=\"box box--live\">'
+RADIO_STATION_START = 'class=\"box box--live\">'
 RADIO_STATION_END = '<!-- FOOTER -->'
 RADIO_STATION_ITER_RE = r'href=\"(?P<url>[^\"]+)\".+?title=\"(?P<title>[^\"]+)'
 
-RADIO_EXTRA_START = '<ul class=\"router--archive-extra\">'
+RADIO_EXTRA_START = 'class=\"router--archive-extra\">'
 RADIO_EXTRA_END = '<!-- ROZHLASOVE STANICE-->'
 RADIO_EXTRA_ITER_RE = r'title=\"(?P<title>[^\"]+).*?href=\"(?P<url>[^\"]+)\".+?subtitle\">(?P<subtitle>[^<]+|)'
 
@@ -242,10 +242,8 @@ class RtvsContentProvider(ContentProvider):
         elif url.find('/json/') != -1:
             if url.find('snippet_archive_series_calendar.json'):
                 if url.find('/radio/') == -1:
-                    self.info('==radio=>')
                     return self.list_episodes(util.json.loads(util.request(self._fix_url(url)))['snippets']['snippet-calendar-calendar'])
                 else:
-                    self.info('==no radio=>')
                     self.base_url = self._get_url(True)
                     return self.list_episodes(util.json.loads(util.request(self._fix_url_radio(url)))['snippets']['snippet-calendar-calendar'])
 
@@ -254,14 +252,10 @@ class RtvsContentProvider(ContentProvider):
         else:
             self.info("EPISODE listing: %s" % url)
             if url.find('/radio/') == -1:
-                self.info('==radio 3 =>')
                 page = util.request(self._fix_url(url))
-                # data_json = self.data_web(page)
                 self.data_web(page)
                 return self.list_episodes(page)
-                # return self.list_episodes(util.request(self._fix_url(url)))
             else:
-                self.info('==radio 4 =>')
                 return self.list_episodes(util.request(self._fix_url_radio(url)))
 
 
@@ -332,7 +326,7 @@ class RtvsContentProvider(ContentProvider):
 
     def get_list_radios(self):
         result = []
-        # self.info ('== get_list_radios ==')
+        self.info ('== get_list_radios ==')
         page = util.request(f'{HOST}/radio/radia')
         page = util.substr(page, RADIO_STATION_START, RADIO_STATION_END)
         for m in re.finditer(RADIO_STATION_ITER_RE, page, re.IGNORECASE | re.DOTALL):
@@ -347,7 +341,7 @@ class RtvsContentProvider(ContentProvider):
 
     def get_radio_archiv_extra(self):
         result = []
-        # self.info ('== get_radio_archiv_extra ==')
+        self.info ('== get_radio_archiv_extra ==')
         # self.info(page)
         page = util.request(f'{HOST}/radio/archiv/extra')
         page = util.substr(page, RADIO_EXTRA_START, RADIO_EXTRA_END)
