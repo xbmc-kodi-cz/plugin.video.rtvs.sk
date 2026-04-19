@@ -551,7 +551,8 @@ class RtvsContentProvider(ContentProvider):
         return result
 
     def list_az(self, page):
-        # self.info ('== list_az ==')
+        self.info ('== list_az ==')
+        # self.info(page)
         result = []
         page = util.substr(page, START_AZ, END_AZ)
         for m in re.finditer(AZ_ITER_RE, page, re.IGNORECASE | re.DOTALL):
@@ -563,6 +564,12 @@ class RtvsContentProvider(ContentProvider):
                 item['title'] = m.group('title')
             item['img'] = self._fix_url(m.group('img'))
             item['url'] = m.group('url')
+            self._filter(result, item)
+        _next = re.search(r'href="([^"]+)"[^>]*aria-label="Nasledujúca"', page)
+        if _next:
+            item = self.dir_item()
+            item['type'] = 'next'
+            item['url'] = urllib.parse.urljoin(HOST, _next.group(1).replace("&amp;", "&"))
             self._filter(result, item)
         return result
 
