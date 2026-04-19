@@ -53,6 +53,23 @@ Video:
 
 _Changelog by jastrab:_ 
 
+**1.9.17:**
+- fix archive A-Z padding
+
+**1.9.16:**
+- fix live radio
+- fix radio extra archive 
+
+**1.9.15:**
+- fix all archive tv and radio
+- add tv archive A-Z title, info
+
+**1.9.14:**
+- fix tv episode
+
+**1.9.13:**
+- added live STVR
+
 **1.9.12:**
 - fix radio live
 
