@@ -1,3 +1,5 @@
+[B]1.9.17:[/B]
+- fix archive A-Z padding
 [B]1.9.16:[/B]
 - fix live radio
 - fix radio extra archive 
