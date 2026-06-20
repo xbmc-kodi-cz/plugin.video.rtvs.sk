@@ -58,7 +58,7 @@ AZ_ITER_RE_RADIO = r'title=\"(?P<title>[^\"]+)\" href=\"(?P<url>[^\"]+)\".+?__st
 
 START_DATE = 'class=\"row tv__archive tv__archive--date\">'
 END_DATE = '<!-- FOOTER -->'
-DATE_ITER_RE = r'<div class=\"media.+?\">\s*<a href=\"(?P<url>[^\"]+)\".+?<img src=\"(?P<img>[^\"]+)\".+?<\/a>\s*<div class=\"media__body\">.+?<div class=\"program time--start\">(?P<time>[^\<]+)<span>.+?<a class=\"link\".+?title=\"(?P<title>[^\"]+)\">'
+DATE_ITER_RE = r'<div class=\"media.*?\">\s*<a title=\"(?P<title>[^\"]+).+?href=\"(?P<url>[^\"]+)\".+?<img src=\"(?P<img>[^\"]+)\".+?<\/a>\s*<div class=\"media__body\">.+?<span class=\"program time--start\">(?P<time>[^\<]+)'
 
 START_DATE_RADIO = '<li class=\"list--radio-series__list list__headers\">'
 END_DATE_RADIO = '<div class=\"box box--live\">'
