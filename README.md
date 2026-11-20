@@ -9,6 +9,7 @@ Plugin umožňuje:
 - archív televíznych staníc:
   - podľa abecedy
   - podľa dátumu
+  - podľa žánru
 - archív rozhlasových staníc:
   - podľa abecedy
   - podľa dátumu
@@ -52,6 +53,10 @@ Video:
 ![Snímka obrazovky_2024-04-30_16-05-37](https://github.com/jastrab/plugin.video.rtvs.sk/assets/6190406/28cb0758-8d9c-4143-9a8e-2283e7316a7f)
 
 _Changelog by jastrab:_ 
+
+**1.9.18:**
+- fix archive A-Z padding tv and radio
+- add new item tv: genres
 
 **1.9.17:**
 - fix archive A-Z padding
